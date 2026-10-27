@@ -1,0 +1,406 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#101018">
+<title>Operation: One Last Question</title>
+<style>
+  :root {
+    color-scheme: dark;
+    --bg: #101018;
+    --panel: rgba(27, 27, 43, .88);
+    --panel2: #222238;
+    --text: #f8f6ff;
+    --muted: #b8b5ca;
+    --pink: #ff78b7;
+    --purple: #a996ff;
+    --line: rgba(255,255,255,.12);
+    --good: #a5f3d0;
+  }
+  * { box-sizing: border-box; }
+  html { min-height: 100%; background: var(--bg); }
+  body {
+    margin: 0; min-height: 100vh; color: var(--text);
+    font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background:
+      radial-gradient(ellipse at 15% 5%, rgba(169,150,255,.18), transparent 34rem),
+      radial-gradient(ellipse at 95% 35%, rgba(255,120,183,.12), transparent 28rem),
+      var(--bg);
+    display: flex; justify-content: center; padding: 20px 14px 36px;
+  }
+  button, input { font: inherit; }
+  button { -webkit-tap-highlight-color: transparent; }
+  .app { width: min(100%, 520px); margin: auto; }
+  .topline { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:22px; }
+  .brand { display:flex; gap:10px; align-items:center; font-size:.78rem; letter-spacing:.14em; text-transform:uppercase; color:#ded9f7; font-weight:800; }
+  .sigil { width:34px; height:34px; display:grid; place-items:center; border:1px solid rgba(255,120,183,.5); border-radius:12px; color:var(--pink); box-shadow:0 0 24px rgba(255,120,183,.12); }
+  .case { font-size:.7rem; color:var(--muted); border:1px solid var(--line); padding:7px 10px; border-radius:999px; white-space:nowrap; }
+  .progress-wrap { margin-bottom:20px; }
+  .progress-label { display:flex; justify-content:space-between; font-size:.76rem; color:var(--muted); margin-bottom:8px; }
+  .progress-track { height:5px; background:rgba(255,255,255,.09); border-radius:99px; overflow:hidden; }
+  .progress-fill { width:0%; height:100%; background:linear-gradient(90deg,var(--purple),var(--pink)); border-radius:99px; transition:width .45s ease; }
+  .screen { display:none; animation: enter .38s ease both; }
+  .screen.active { display:block; }
+  @keyframes enter { from { opacity:0; transform:translateY(10px) scale(.99); } to { opacity:1; transform:translateY(0) scale(1); } }
+  .eyebrow { color:var(--pink); text-transform:uppercase; letter-spacing:.16em; font-size:.72rem; font-weight:800; margin:0 0 12px; }
+  h1,h2,p { margin-top:0; }
+  h1 { font-size:clamp(2.25rem, 11vw, 3.6rem); line-height:.98; letter-spacing:-.055em; margin-bottom:18px; }
+  h2 { font-size:clamp(1.55rem, 7vw, 2.15rem); line-height:1.08; letter-spacing:-.035em; margin-bottom:14px; }
+  .gradient { background:linear-gradient(100deg,#fff 10%,#ffc0df 48%,#b9adff 90%); -webkit-background-clip:text; background-clip:text; color:transparent; }
+  .lead { color:var(--muted); line-height:1.65; font-size:1rem; max-width:42ch; }
+  .card { background:var(--panel); border:1px solid var(--line); border-radius:24px; padding:clamp(20px, 6vw, 30px); box-shadow:0 22px 70px rgba(0,0,0,.22); backdrop-filter:blur(12px); }
+  .stamp { display:inline-flex; align-items:center; gap:8px; padding:8px 11px; border-radius:10px; border:1px solid rgba(169,150,255,.28); background:rgba(169,150,255,.08); color:#d6ceff; font-size:.78rem; margin:4px 0 22px; }
+  .stamp .dot { width:7px;height:7px;border-radius:50%;background:var(--good);box-shadow:0 0 10px var(--good); }
+  .button { border:0; cursor:pointer; border-radius:14px; padding:15px 17px; min-height:52px; font-weight:800; transition:transform .16s ease, filter .16s ease, border-color .16s ease; }
+  .button:active { transform:scale(.98); }
+  .button:focus-visible, input:focus-visible { outline:3px solid var(--purple); outline-offset:3px; }
+  .primary { color:#1c1220; background:linear-gradient(100deg,#ff91c5,#c0b4ff); box-shadow:0 8px 28px rgba(255,120,183,.16); }
+  .primary:hover { filter:brightness(1.06); }
+  .secondary { color:var(--text); background:rgba(255,255,255,.04); border:1px solid var(--line); }
+  .full { width:100%; }
+  .button-row { display:flex; gap:10px; margin-top:24px; }
+  .button-row > * { flex:1; }
+  .tiny { color:var(--muted); font-size:.78rem; line-height:1.5; margin:15px 0 0; }
+  .question-count { color:var(--muted); font-size:.78rem; margin-bottom:13px; }
+  .options { display:grid; gap:10px; margin-top:22px; }
+  .option { width:100%; text-align:left; color:var(--text); background:rgba(255,255,255,.035); border:1px solid var(--line); padding:15px 14px; border-radius:15px; display:flex; align-items:center; gap:12px; line-height:1.35; cursor:pointer; }
+  .option:hover { border-color:rgba(255,120,183,.55); background:rgba(255,120,183,.06); }
+  .option.selected { border-color:var(--pink); background:rgba(255,120,183,.1); }
+  .letter { flex:0 0 30px; width:30px; height:30px; display:grid; place-items:center; border:1px solid var(--line); border-radius:9px; color:#d6ceff; font-size:.8rem; font-weight:800; }
+  .reaction { display:none; margin-top:14px; padding:13px 14px; border-radius:14px; border:1px solid rgba(169,150,255,.25); background:rgba(169,150,255,.08); color:#e5dfff; font-size:.9rem; line-height:1.5; }
+  .reaction.show { display:block; animation:enter .25s ease both; }
+  .emoji-orbit { width:112px;height:112px;border-radius:32px;display:grid;place-items:center;font-size:3.5rem;margin:8px 0 26px; transform:rotate(-5deg); background:linear-gradient(145deg,rgba(169,150,255,.18),rgba(255,120,183,.12)); border:1px solid rgba(255,255,255,.13); box-shadow:0 0 55px rgba(169,150,255,.1); }
+  .result-list { display:grid; gap:10px; margin:22px 0; }
+  .result-row { display:flex; gap:12px; align-items:flex-start; padding:13px; background:rgba(255,255,255,.035); border:1px solid var(--line); border-radius:14px; }
+  .result-icon { font-size:1.15rem; }
+  .result-row strong { display:block; margin-bottom:3px; font-size:.9rem; }
+  .result-row span:last-child { display:block; color:var(--muted); font-size:.83rem; line-height:1.45; }
+  .input-label { display:block; color:#e8e3f7; font-weight:700; font-size:.87rem; margin:20px 0 8px; }
+  .input { width:100%; min-height:52px; padding:14px 15px; border-radius:14px; border:1px solid var(--line); background:#151522; color:var(--text); }
+  .input::placeholder { color:#77748d; }
+  .privacy { display:flex; gap:10px; align-items:flex-start; color:var(--muted); font-size:.8rem; line-height:1.5; margin:13px 0 0; }
+  .privacy input { margin-top:3px; accent-color:var(--pink); }
+  .success { display:none; padding:14px; border-radius:14px; background:rgba(165,243,208,.08); border:1px solid rgba(165,243,208,.25); color:#c8ffe8; margin-top:14px; line-height:1.5; font-size:.9rem; }
+  .success.show { display:block; }
+  .footer { text-align:center; color:#79768d; font-size:.72rem; line-height:1.5; margin:20px 10px 0; }
+  .toast { min-height:20px; color:var(--pink); font-size:.82rem; margin-top:8px; }
+  .sparkle { display:inline-block; animation:float 2.5s ease-in-out infinite; }
+  @keyframes float { 0%,100%{transform:translateY(0) rotate(-4deg)}50%{transform:translateY(-7px) rotate(4deg)} }
+  @media (prefers-reduced-motion: reduce) { *,*::before,*::after { animation-duration:.01ms!important; transition-duration:.01ms!important; scroll-behavior:auto!important; } }
+</style>
+</head>
+<body>
+<main class="app">
+  <header class="topline">
+    <div class="brand"><span class="sigil">✦</span><span>Midnight Bureau</span></div>
+    <span class="case">CASE FILE · 007</span>
+  </header>
+
+  <div class="progress-wrap" aria-label="Investigation progress">
+    <div class="progress-label"><span id="progressText">Investigation not started</span><span id="progressPercent">0%</span></div>
+    <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+  </div>
+
+  <section class="screen active" id="intro">
+    <div class="card">
+      <div class="stamp"><span class="dot"></span> TOP SECRET · FLIRTATION DIVISION</div>
+      <div class="emoji-orbit sparkle" aria-hidden="true">🕵️‍♀️</div>
+      <p class="eyebrow">A tiny mystery for you</p>
+      <h1>You've been<br><span class="gradient">summoned.</span></h1>
+      <p class="lead">A highly unofficial investigation has detected suspicious levels of charm. We need your expert opinion. It takes about 60 seconds. Your answers may be used for absolutely unserious purposes. 👀</p>
+      <div class="button-row">
+        <button class="button primary full" id="startBtn">Open the case file <span aria-hidden="true">→</span></button>
+      </div>
+      <p class="tiny">No passwords. No weird stuff. Just three questions and one tiny plot twist.</p>
+    </div>
+  </section>
+
+  <section class="screen" id="q1">
+    <div class="card">
+      <p class="question-count">EVIDENCE 01 / 03</p>
+      <p class="eyebrow">Initial screening</p>
+      <h2>What's your most dangerous red flag? 🚩</h2>
+      <p class="lead">Choose carefully. The Bureau is taking notes (in glitter pen).</p>
+      <div class="options">
+        <button class="option" data-question="1" data-answer="A"><span class="letter">A</span><span>I overthink a “haha” for 40 minutes.</span></button>
+        <button class="option" data-question="1" data-answer="B"><span class="letter">B</span><span>I steal fries and call it quality control.</span></button>
+        <button class="option" data-question="1" data-answer="C"><span class="letter">C</span><span>I cause chaos, then look completely innocent.</span></button>
+      </div>
+      <div class="reaction" id="reaction1" role="status" aria-live="polite"></div>
+      <div class="button-row"><button class="button primary full" id="next1" disabled>Submit evidence →</button></div>
+    </div>
+  </section>
+
+  <section class="screen" id="q2">
+    <div class="card">
+      <p class="question-count">EVIDENCE 02 / 03</p>
+      <p class="eyebrow">Communication analysis</p>
+      <h2>Choose your ideal conversation. 💬</h2>
+      <p class="lead">This is extremely scientific. Probably.</p>
+      <div class="options">
+        <button class="option" data-question="2" data-answer="A"><span class="letter">A</span><span>Deep talks at 2 AM that fix absolutely nothing.</span></button>
+        <button class="option" data-question="2" data-answer="B"><span class="letter">B</span><span>Flirting until one of us forgets how to act normal.</span></button>
+        <button class="option" data-question="2" data-answer="C"><span class="letter">C</span><span>Playful roasting with suspiciously good chemistry.</span></button>
+      </div>
+      <div class="reaction" id="reaction2" role="status" aria-live="polite"></div>
+      <div class="button-row"><button class="button secondary" id="back2">← Back</button><button class="button primary" id="next2" disabled>Continue →</button></div>
+    </div>
+  </section>
+
+  <section class="screen" id="q3">
+    <div class="card">
+      <p class="question-count">EVIDENCE 03 / 03</p>
+      <p class="eyebrow">Suspect assessment</p>
+      <h2>How's the investigator doing so far? 😏</h2>
+      <p class="lead">Honesty is encouraged. Excessive flattery may go directly to his head.</p>
+      <div class="options">
+        <button class="option" data-question="3" data-answer="A"><span class="letter">A</span><span>Annoyingly charming. I have questions.</span></button>
+        <button class="option" data-question="3" data-answer="B"><span class="letter">B</span><span>Needs further investigation. Obviously.</span></button>
+        <button class="option" data-question="3" data-answer="C"><span class="letter">C</span><span>I'm just here for the plot. 😂</span></button>
+      </div>
+      <div class="reaction" id="reaction3" role="status" aria-live="polite"></div>
+      <div class="button-row"><button class="button secondary" id="back3">← Back</button><button class="button primary" id="next3" disabled>Reveal findings ✦</button></div>
+    </div>
+  </section>
+
+  <section class="screen" id="results">
+    <div class="card">
+      <div class="emoji-orbit sparkle" aria-hidden="true">🗂️</div>
+      <p class="eyebrow">Case findings · classified-ish</p>
+      <h2 id="resultTitle">The results are in.</h2>
+      <p class="lead" id="resultLead">After a rigorous process involving three questions and zero qualifications…</p>
+      <div class="result-list" id="resultList"></div>
+      <p class="lead">The Bureau recommends one final step. It's small. It's bold. It's not legally binding. 😉</p>
+      <div class="button-row"><button class="button primary full" id="finalBtn">Proceed to the plot twist →</button></div>
+    </div>
+  </section>
+
+  <section class="screen" id="final">
+    <div class="card">
+      <div class="emoji-orbit sparkle" aria-hidden="true">💌</div>
+      <p class="eyebrow">Final boss unlocked</p>
+      <h2>One last question.</h2>
+      <p class="lead">You've survived the investigation. Unfortunately, this website has one major limitation: it cannot continue a conversation with you. 😌</p>
+      <div class="stamp">RECOMMENDATION: TAKE THIS OFFLINE</div>
+      <h2 style="font-size:1.55rem">Want to exchange numbers? 📱</h2>
+      <p class="lead">If you're comfortable, leave your number below. Or skip it and keep the mystery alive on the app. Your call, detective.</p>
+      <form id="numberForm">
+        <label class="input-label" for="phone">Your number (only if you want to share it)</label>
+        <input class="input" id="phone" name="phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="e.g. +91 98765 43210" maxlength="30">
+        <label class="privacy"><input type="checkbox" id="consent"><span>I agree that my number and quiz answers will be sent to the site owner by Google Sheets and email, only so we can continue this conversation. Sharing is optional.</span></label>
+        <div aria-hidden="true" style="position:absolute;left:-10000px;width:1px;height:1px;overflow:hidden"><label for="website">Leave this field empty</label><input id="website" name="website" type="text" tabindex="-1" autocomplete="off"></div>
+        <div class="toast" id="formToast" role="status" aria-live="polite"></div>
+        <div class="button-row"><button class="button primary full" type="submit">Submit my very official answer ✨</button></div>
+      </form>
+      <div class="success" id="successMsg" role="status" aria-live="polite"></div>
+      <div class="button-row"><button class="button secondary full" id="skipBtn">Keep the mystery alive 😂</button></div>
+      <p class="tiny">Your number is sent only after you tick the consent box and submit. It will be stored in a private Google Sheet and emailed to the site owner. Do not share anything you are not comfortable sharing.</p>
+    </div>
+  </section>
+
+  <section class="screen" id="goodbye">
+    <div class="card">
+      <div class="emoji-orbit sparkle" aria-hidden="true">🫡</div>
+      <p class="eyebrow">Case paused</p>
+      <h2>Excellent detective work.</h2>
+      <p class="lead">The Bureau respects a little mystery. You can keep chatting here, and if you both feel like exchanging numbers later, the door is open. 😉</p>
+      <button class="button primary full" id="restartBtn">Reopen the case ↻</button>
+    </div>
+  </section>
+
+  <footer class="footer">A tiny, harmless mystery made for one very specific plot twist.<br>Built with HTML, CSS & JavaScript. No tracking. Optional number submissions are handled by Google Apps Script, Google Sheets and email.</footer>
+</main>
+
+<script>
+(() => {
+  const screens = [...document.querySelectorAll('.screen')];
+  const fill = document.getElementById('progressFill');
+  const progressText = document.getElementById('progressText');
+  const progressPercent = document.getElementById('progressPercent');
+  const answers = {};
+  const progressByScreen = {
+    intro: [0, 'Investigation not started'],
+    q1: [15, 'Opening the case file'],
+    q2: [40, 'Collecting evidence'],
+    q3: [65, 'Cross-checking clues'],
+    results: [85, 'Compiling findings'],
+    final: [100, 'Final question unlocked'],
+    goodbye: [100, 'Case paused']
+  };
+  const reactions = {
+    1: {
+      A: 'Noted: a professional overthinker. The Bureau recommends sending fewer cryptic “hmm” messages. 🧐',
+      B: 'Fries theft? A serious allegation. We respect the confidence, though. 🍟',
+      C: 'Ah, a chaos specialist. The innocent face is probably part of the strategy. 😇'
+    },
+    2: {
+      A: 'The 2 AM philosophy department has entered the chat. Bring snacks and one emotionally available playlist. 🌙',
+      B: 'Warning: the flirting levels may exceed recommended limits. We have no intention of stopping it. 😏',
+      C: 'Playful roasting AND chemistry? The Bureau calls that suspiciously promising. 🔥'
+    },
+    3: {
+      A: 'This investigator is now 37% more confident. That number is made up, but the grin is real. 😌',
+      B: 'A request for further investigation has been approved. Conveniently, there is one final question. 👀',
+      C: 'Respect. You came for the plot, and the plot has developed feelings about this case. 😂'
+    }
+  };
+  const responseText = {
+    1: {A:'Overthinking expert', B:'Snack-based menace', C:'Certified chaos agent'},
+    2: {A:'Midnight philosopher', B:'Flirtation enthusiast', C:'Chemistry through chaos'},
+    3: {A:'Charm detected', B:'Investigation extended', C:'Plot-driven wildcard'}
+  };
+
+  function show(id) {
+    screens.forEach(s => s.classList.toggle('active', s.id === id));
+    const [pct, label] = progressByScreen[id] || [0, ''];
+    fill.style.width = pct + '%';
+    progressText.textContent = label;
+    progressPercent.textContent = pct + '%';
+    window.scrollTo({ top: 0, behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
+  }
+
+  document.getElementById('startBtn').addEventListener('click', () => show('q1'));
+
+  document.querySelectorAll('.option').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const q = Number(btn.dataset.question);
+      const answer = btn.dataset.answer;
+      answers[q] = answer;
+      document.querySelectorAll('.option[data-question="' + q + '"]').forEach(other => {
+        other.classList.toggle('selected', other === btn);
+        other.setAttribute('aria-pressed', String(other === btn));
+      });
+      const reaction = document.getElementById('reaction' + q);
+      reaction.textContent = reactions[q][answer];
+      reaction.classList.add('show');
+      document.getElementById(q === 1 ? 'next1' : q === 2 ? 'next2' : 'next3').disabled = false;
+    });
+  });
+
+  document.getElementById('next1').addEventListener('click', () => show('q2'));
+  document.getElementById('back2').addEventListener('click', () => show('q1'));
+  document.getElementById('next2').addEventListener('click', () => show('q3'));
+  document.getElementById('back3').addEventListener('click', () => show('q2'));
+  document.getElementById('next3').addEventListener('click', () => {
+    const title = document.getElementById('resultTitle');
+    const lead = document.getElementById('resultLead');
+    const third = answers[3];
+    title.textContent = third === 'A' ? 'Well, this is going suspiciously well.' : third === 'B' ? 'Further investigation approved.' : 'The plot thickens.';
+    lead.textContent = third === 'A'
+      ? 'The suspect appears to have noticed the investigator’s charm. The investigator will remain professional for approximately 3 seconds.'
+      : third === 'B'
+      ? 'The suspect has requested more evidence. Conveniently, the Bureau has prepared one final, very low-stakes question.'
+      : 'The suspect claims to be here for the plot. The Bureau has reviewed the plot and would like to renew it for another episode.';
+    const list = document.getElementById('resultList');
+    list.replaceChildren();
+    [
+      ['🧩', 'Red-flag profile', responseText[1][answers[1]]],
+      ['💬', 'Conversation type', responseText[2][answers[2]]],
+      ['🔎', 'Charm assessment', responseText[3][answers[3]]]
+    ].forEach(([icon, label, value], index) => {
+      const row = document.createElement('div');
+      row.className = 'result-row';
+      const symbol = document.createElement('span');
+      symbol.className = 'result-icon';
+      symbol.textContent = icon;
+      const copy = document.createElement('div');
+      const strong = document.createElement('strong');
+      strong.textContent = label;
+      const detail = document.createElement('span');
+      detail.textContent = value;
+      copy.append(strong, detail);
+      row.append(symbol, copy);
+      row.style.animation = 'enter .35s ease ' + (index * 100) + 'ms both';
+      list.append(row);
+    });
+    show('results');
+  });
+  document.getElementById('finalBtn').addEventListener('click', () => show('final'));
+
+  // Paste the deployed Google Apps Script Web App URL here.
+  // This endpoint URL is public by design; never put passwords, API keys, or email credentials in this HTML.
+  const SUBMISSION_ENDPOINT = 'PASTE_YOUR_APPS_SCRIPT_WEB_APP_URL_HERE';
+
+  document.getElementById('numberForm').addEventListener('submit', async event => {
+    event.preventDefault();
+    const phone = document.getElementById('phone');
+    const consent = document.getElementById('consent');
+    const honeypot = document.getElementById('website');
+    const toast = document.getElementById('formToast');
+    const success = document.getElementById('successMsg');
+    const submitButton = event.submitter || document.querySelector('#numberForm button[type="submit"]');
+    success.classList.remove('show');
+
+    if (!phone.value.trim()) {
+      toast.textContent = 'The final answer box is empty, detective. You can also skip this step. 🙂';
+      phone.focus();
+      return;
+    }
+    if (phone.value.trim().length < 7 || phone.value.trim().length > 30) {
+      toast.textContent = 'That number looks a little short or long. Please check it.';
+      phone.focus();
+      return;
+    }
+    if (!consent.checked) {
+      toast.textContent = 'Please tick the consent box before sharing your number.';
+      consent.focus();
+      return;
+    }
+    if (SUBMISSION_ENDPOINT === 'PASTE_YOUR_APPS_SCRIPT_WEB_APP_URL_HERE') {
+      toast.textContent = 'The site owner still needs to connect the form. Please message them on the dating app instead.';
+      return;
+    }
+
+    toast.textContent = 'Sending your answer securely…';
+    if (submitButton) submitButton.disabled = true;
+    try {
+      // URLSearchParams keeps this a simple form-encoded POST (no API key in the browser).
+      // Apps Script responses are opaque in no-cors mode, so the page cannot inspect server errors.
+      await fetch(SUBMISSION_ENDPOINT, {
+        method: 'POST',
+        mode: 'no-cors',
+        body: new URLSearchParams({
+          phone: phone.value.trim(),
+          consent: 'yes',
+          answer1: answers[1] || '',
+          answer2: answers[2] || '',
+          answer3: answers[3] || '',
+          website: honeypot ? honeypot.value : '',
+          source: 'Operation: One Last Question'
+        })
+      });
+      toast.textContent = '';
+      success.textContent = 'Your submission has been sent to the Bureau. 💌 This page cannot verify Google’s final delivery, but if there is a problem, you can message me on the dating app instead.';
+      success.classList.add('show');
+      phone.value = '';
+      consent.checked = false;
+    } catch (error) {
+      toast.textContent = 'Could not send right now. Please try again, or message me directly on the dating app.';
+    } finally {
+      if (submitButton) submitButton.disabled = false;
+    }
+  });
+  document.getElementById('skipBtn').addEventListener('click', () => show('goodbye'));
+  document.getElementById('restartBtn').addEventListener('click', () => {
+    Object.keys(answers).forEach(k => delete answers[k]);
+    document.querySelectorAll('.option').forEach(btn => {
+      btn.classList.remove('selected');
+      btn.setAttribute('aria-pressed', 'false');
+    });
+    [1,2,3].forEach(q => {
+      document.getElementById('reaction' + q).classList.remove('show');
+      document.getElementById('reaction' + q).textContent = '';
+      document.getElementById(q === 1 ? 'next1' : q === 2 ? 'next2' : 'next3').disabled = true;
+    });
+    document.getElementById('phone').value = '';
+    document.getElementById('consent').checked = false;
+    const hp = document.getElementById('website'); if (hp) hp.value = '';
+    document.getElementById('formToast').textContent = '';
+    document.getElementById('successMsg').classList.remove('show');
+    show('intro');
+  });
+})();
+</script>
+</body>
+</html>
